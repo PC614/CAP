@@ -23,7 +23,7 @@ Enhancing Adversarial Transferability via Curvature-Aware Penalization
 
 2. The normally trained models (i.e., Inc-v3, Inc-v4, IncRes-v2, Res-50, Res-101, Res-100) are from "pretrainedmodels", if you use it for the first time, it will download the weight of the model automatically, just wait for it to finish. 
 
-3. You can download the adversarially trained models (i.e, ens3_adv_inc_v3, ens4_adv_inc_v3, ens_adv_inc_res_v2) from [here](https://drive.google.com/drive/folders/1O_3HIHFeAjycR0z_px7Mb_XqKqyDm7eK?usp=drive_link) and put the data in **'./model/'**.
+3. You can download the adversarially trained models (i.e, ens3_adv_inc_v3, ens4_adv_inc_v3, ens_adv_inc_res_v2) from [here](https://drive.google.com/drive/folders/1O_3HIHFeAjycR0z_px7Mb_XqKqyDm7eK?usp=drive_link) and put the model in **'./model/'**.
 
 ### CAP Attack Method
 The traditional baseline attacks and our proposed CAP attack methods are in the file __"attack_method.py"__.
@@ -40,6 +40,7 @@ We also provide the implementations of other baseline attack methods in our code
 ```
 python verify.py --attack cap --name inception_v3
 ```
+
 
 
 
