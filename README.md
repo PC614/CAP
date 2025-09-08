@@ -2,6 +2,7 @@
 This repository contains the PyTorch code for the manuscript:
 
 Enhancing Adversarial Transferability via Curvature-Aware Penalization
+[pipeline.pdf](https://github.com/user-attachments/files/22210433/pipeline.pdf)
 
 ## Requirements
 * python == 3.8.20
@@ -40,6 +41,7 @@ We also provide the implementations of other baseline attack methods in our code
 ```
 python verify.py --attack cap --name inception_v3
 ```
+
 
 
 
