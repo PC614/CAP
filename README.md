@@ -34,7 +34,7 @@ The traditional baseline attacks and our proposed CAP attack methods are in the 
 ```
 python ge_adv.py --attack cap --name inception_v3
 ```
-We also provide the implementations of other baseline attack methods in our code, just change them to the corresponding attack methods in the **main()** function.
+We also provide the implementations of other baseline attack methods in our code, just change cap to the corresponding attack methods in the code.
 
 2. The generated adversarial examples would be stored in the directory **./adv_xx_xx**. Then run the file **verify.py** to evaluate the success rate of each model used in the paper:
 ```
@@ -42,4 +42,5 @@ python verify.py --attack cap --name inception_v3
 ```
 ## Acknowledgments
 The codes mainly references: [SSA](https://github.com/yuyang-long/SSA) and [styleAug](https://github.com/philipjackson/style-augmentation)
+
 
