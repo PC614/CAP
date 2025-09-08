@@ -145,7 +145,7 @@ def aitm(model, x, y, loss_fn, epsilon=epsilon, alpha=alpha, num_iter=10,mu1=1.5
     return x_adv
 
 
-#NeurIPS'2023 PGN 分超级高(zeta =3 时) 该论文必须好好的借鉴 非常不错 为什么高 
+#NeurIPS'2023 PGN  
 def pgn(model, x, y, loss_fn,epsilon=epsilon, alpha=alpha, num_iter=10, decay=1.0,beta=3.0,aa=0.5,N=20):
     x_adv = x
     # initialze momentum tensor
@@ -228,113 +228,6 @@ def cosine_similarity(g1, g2):
     norm_g1 = torch.norm(g1, p=2, dim=(1, 2, 3))  # 计算L2范数
     norm_g2 = torch.norm(g2, p=2, dim=(1, 2, 3))  # 计算L2范数
     return dot_product / (norm_g1 * norm_g2)
-
-def pcr(model, x, y, loss_fn,epsilon=epsilon, alpha=alpha, num_iter=10, decay=1.0, beta=3, aa=0.5, bb=0.4, N=20, P=5, S = 10, sigma=1):
-    x_adv = x
-    momentum = torch.zeros_like(x).detach().cuda()
-    grad_history = []
-    for i in range(P):
-        x_adv = x_adv.detach().clone()
-        avg_grad = torch.zeros_like(x).detach().cuda()
-        for _ in range(N):
-            x_near = x_adv + torch.rand_like(x).uniform_(-epsilon*beta, epsilon*beta)
-            x_near = Variable(x_near, requires_grad = True)
-            out = model(x_near)
-            loss = loss_fn(out, y)
-            loss.backward()
-            g1 = x_near.grad.detach()
-            x_star = x_near.detach() + alpha * (-g1)/torch.abs(g1).mean([1, 2, 3], keepdim=True)
-            nes_x = x_star.detach()
-            nes_x = Variable(nes_x, requires_grad = True)
-            out = model(nes_x)
-            loss = loss_fn(out, y)
-            loss.backward()
-            g2 = nes_x.grad.detach()
-            x_sun = x_near.detach() - alpha * (-g1) / torch.abs(g1).mean([1, 2, 3], keepdim=True)
-            on_x = x_sun.detach()
-            on_x = Variable(on_x, requires_grad=True)
-            out = model(on_x)
-            loss = loss_fn(out, y)
-            loss.backward()
-            g3 = on_x.grad.detach()
-            avg_grad += aa*g1 + bb*g2 + (1-aa-bb)*g3
-        grad_norm = torch.abs(avg_grad).mean([1, 2, 3], keepdim=True)
-        grad = avg_grad / grad_norm
-        grad = decay * momentum + grad
-        momentum = grad
-        if len(grad_history) > 0:
-            grad_similarity = get_cosine_similarity(grad,grad_history[-1])
-            sigma = grad_similarity.mean().item()
-            print(sigma)
-        x_adv = x_adv + (S/sigma) * alpha * torch.sign(grad)
-        delta = torch.clamp(x_adv - x, min=-epsilon, max=epsilon)
-        x_adv = torch.clamp(x + delta, min=0, max=1).detach()
-        grad_history.append(grad)
-        if len(grad_history) > N:
-            grad_history.pop(0)
-    x_adv = x
-    for i in range(num_iter):
-        x_adv = x_adv.detach().clone()
-        avg_grad = torch.zeros_like(x).detach().cuda()
-        for _ in range(N):
-            x_near = x_adv + torch.rand_like(x).uniform_(-epsilon*beta, epsilon*beta)
-            x_near = Variable(x_near, requires_grad = True)
-            out = model(x_near)
-            loss = loss_fn(out, y)
-            loss.backward()
-            g1 = x_near.grad.detach()
-            x_star = x_near.detach() + alpha * (-g1)/torch.abs(g1).mean([1, 2, 3], keepdim=True)
-            nes_x = x_star.detach()
-            nes_x = Variable(nes_x, requires_grad = True)
-            out = model(nes_x)
-            loss = loss_fn(out, y)
-            loss.backward()
-            g2 = nes_x.grad.detach()
-            x_sun = x_near.detach() - alpha * (-g1) / torch.abs(g1).mean([1, 2, 3], keepdim=True)
-            on_x = x_sun.detach()
-            on_x = Variable(on_x, requires_grad=True)
-            out = model(on_x)
-            loss = loss_fn(out, y)
-            loss.backward()
-            g3 = on_x.grad.detach()
-            avg_grad += aa*g1 + bb*g2 + (1-aa-bb)*g3
-        grad_norm = torch.abs(avg_grad).mean([1, 2, 3], keepdim=True)
-        grad = avg_grad / grad_norm
-        grad = decay * momentum + grad
-        momentum = grad
-        x_adv = x_adv + alpha * torch.sign(grad)
-        delta = torch.clamp(x_adv - x, min=-epsilon, max=epsilon)
-        x_adv = torch.clamp(x + delta, min=0, max=1).detach()
-    return x_adv
-
-def gmifgsm(model, x, y, loss_fn, epsilon=epsilon, alpha=alpha, num_iter=10, decay=1.0,P = 5,S = 10):
-    x_adv = x
-    momentum = torch.zeros_like(x).detach().cuda()
-    for i in range(P):
-        x_adv = x_adv.detach().clone()
-        x_adv.requires_grad = True
-        loss = loss_fn(model(x_adv), y)
-        loss.backward()
-        grad = x_adv.grad.detach()
-        grad = decay * momentum +  grad / torch.mean(torch.abs(grad), dim=(1,2,3), keepdim=True)
-        momentum = grad
-        x_adv = x_adv + S * alpha * grad.sign()
-        delta = torch.clamp(x_adv - x, min=-epsilon, max=epsilon)
-        x_adv = torch.clamp(x + delta, min=0, max=1).detach()
-    x_adv = x
-    for j in range(num_iter):
-        x_adv = x_adv.detach().clone()
-        x_adv.requires_grad = True
-        loss = loss_fn(model(x_adv), y)
-        loss.backward()
-        grad = x_adv.grad.detach()
-        grad = decay * momentum +  grad / torch.mean(torch.abs(grad), dim=(1,2,3), keepdim=True)
-        momentum = grad
-        x_adv = x_adv + alpha * grad.sign()
-        delta = torch.clamp(x_adv - x, min=-epsilon, max=epsilon)
-        x_adv = torch.clamp(x + delta, min=0, max=1).detach()
-    return x_adv
-
 
 def gvmi_fgsm(model, x, y, loss_fn, alpha=alpha, num_iter=10, decay=1, N=20, beta=3/2, epsilon=epsilon, P = 5, S = 10):
     x_adv = x
@@ -1126,4 +1019,5 @@ def SSA(model, x, y, loss_fn, epsilon=epsilon, alpha=alpha, num_iter=10, decay=1
         delta = torch.clamp(x_adv - x, min=-epsilon, max=epsilon)
         x_adv = torch.clamp(x + delta, min=0, max=1).detach()
     return x_adv
+
 
